@@ -3,15 +3,35 @@ import { env } from '../config/env.js';
 
 export const logger = pino({
   level: env.isTest ? 'silent' : env.LOG_LEVEL,
-  // Never write credentials or session tokens to logs
+  // Never write credentials, session tokens or payment secrets to logs,
+  // even if a future log call includes a request, body or config object.
   redact: {
     paths: [
       'req.headers.authorization',
       'req.headers.cookie',
+      'req.headers["x-razorpay-signature"]',
       'res.headers["set-cookie"]',
+      'headers.authorization',
+      'headers.cookie',
+      'body.password',
+      'body.currentPassword',
+      'body.newPassword',
+      'body.razorpay_signature',
       '*.password',
       '*.passwordHash',
+      '*.currentPassword',
+      '*.newPassword',
       '*.token',
+      '*.accessToken',
+      '*.refreshToken',
+      '*.secret',
+      '*.apiKey',
+      '*.apiSecret',
+      '*.keySecret',
+      '*.webhookSecret',
+      '*.razorpay_signature',
+      '*.cardNumber',
+      '*.cvv',
     ],
     censor: '[REDACTED]',
   },

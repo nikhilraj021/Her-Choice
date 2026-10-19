@@ -1,20 +1,18 @@
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { after, before, describe, it, mock } from 'node:test';
 import request from 'supertest';
 import { createApp } from '../../src/app.js';
+import { healthService } from '../../src/services/health.service.js';
 
 const app = createApp();
 
-describe('GET /api/v1/health', () => {
-  it('returns the success envelope', async () => {
-    const res = await request(app).get('/api/v1/health');
+// These tests exercise cross-cutting middleware via the health route, so its database check is stubbed
+before(() => {
+  mock.method(healthService, 'checkDatabase', async () => ({ status: 'up', latencyMs: 1 }));
+});
+after(() => mock.restoreAll());
 
-    assert.equal(res.status, 200);
-    assert.equal(res.body.success, true);
-    assert.equal(res.body.data.status, 'ok');
-    assert.equal(typeof res.body.data.uptimeSeconds, 'number');
-  });
-
+describe('request IDs', () => {
   it('assigns a request ID', async () => {
     const res = await request(app).get('/api/v1/health');
     assert.match(res.headers['x-request-id'], /^[0-9a-f-]{36}$/);
@@ -78,14 +76,26 @@ describe('security headers', () => {
 });
 
 describe('CORS', () => {
-  it('allows configured origins with credentials', async () => {
+  it('allows FRONTEND_URL with credentials', async () => {
     const res = await request(app).get('/api/v1/health').set('Origin', 'http://localhost:3000');
 
     assert.equal(res.headers['access-control-allow-origin'], 'http://localhost:3000');
     assert.equal(res.headers['access-control-allow-credentials'], 'true');
   });
 
-  it('does not grant access to unknown origins', async () => {
+  it('answers preflight requests from FRONTEND_URL', async () => {
+    const res = await request(app)
+      .options('/api/v1/health')
+      .set('Origin', 'http://localhost:3000')
+      .set('Access-Control-Request-Method', 'POST')
+      .set('Access-Control-Request-Headers', 'Content-Type');
+
+    assert.equal(res.status, 204);
+    assert.equal(res.headers['access-control-allow-origin'], 'http://localhost:3000');
+    assert.match(res.headers['access-control-allow-methods'], /POST/);
+  });
+
+  it('does not grant access to other origins', async () => {
     const res = await request(app).get('/api/v1/health').set('Origin', 'https://evil.example');
     assert.equal(res.headers['access-control-allow-origin'], undefined);
   });

@@ -15,6 +15,7 @@
     "lint:fix": "eslint . --fix",
     "test": "node --import ./tests/setup.js --test \"tests/**/*.test.js\"",
     "test:watch": "node --import ./tests/setup.js --test --watch \"tests/**/*.test.js\"",
+    "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",

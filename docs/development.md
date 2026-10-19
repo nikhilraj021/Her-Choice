@@ -67,15 +67,20 @@ The backend validates its variables at startup (`src/config/env.js`) and refuses
 
 | Variable               | Default                  | Description                                            |
 | ---------------------- | ------------------------ | ------------------------------------------------------ |
-| `NODE_ENV`             | `development`            | `development`, `production` or `test`                  |
-| `PORT`                 | `5000`                   | HTTP port                                              |
-| `CORS_ORIGINS`         | `http://localhost:3000`  | Comma-separated browser origins allowed with cookies   |
-| `TRUST_PROXY`          | `0`                      | Reverse-proxy hops in front of the API                 |
-| `LOG_LEVEL`            | `info`                   | pino log level                                         |
-| `BODY_SIZE_LIMIT`      | `100kb`                  | Max JSON / form body size                              |
-| `RATE_LIMIT_WINDOW_MS` | `900000`                 | Global rate-limit window (ms)                          |
-| `RATE_LIMIT_MAX`       | `300`                    | Requests per IP per window                             |
-| `DATABASE_URL`         | –                        | MySQL connection URL (used by Prisma)                  |
+| `NODE_ENV`              | `development`  | `development`, `production` or `test`                                                    |
+| `PORT`                  | `5000`         | HTTP port                                                                                |
+| `FRONTEND_URL`          | **required**   | Frontend origin; the only browser origin allowed with cookies. Must be https in production |
+| `DATABASE_URL`          | **required**   | `mysql://USER:PASSWORD@HOST:PORT/DATABASE` (URL-encode special characters)               |
+| `DATABASE_SSL`          | `false`        | TLS to MySQL. Required in production unless MySQL is on the same machine                 |
+| `DB_CONNECTION_LIMIT`   | `10`           | Connection pool size                                                                     |
+| `DB_CONNECT_TIMEOUT_MS` | `10000`        | Time to wait for a connection                                                            |
+| `TRUST_PROXY`           | `0`            | Reverse-proxy hops in front of the API                                                   |
+| `LOG_LEVEL`             | `info`         | pino log level                                                                           |
+| `BODY_SIZE_LIMIT`       | `100kb`        | Max JSON / form body size                                                                |
+| `RATE_LIMIT_WINDOW_MS`  | `900000`       | Global rate-limit window (ms)                                                            |
+| `RATE_LIMIT_MAX`        | `300`          | Requests per IP per window                                                               |
+
+The server connects to MySQL **before** it starts listening and exits if it can't, so a running server always has a working database connection. `Ctrl+C` (SIGINT) or SIGTERM stops accepting connections, lets in-flight requests finish (up to 10 seconds), then closes the database pool.
 
 ### Frontend (`frontend/.env.local`)
 
@@ -92,6 +97,10 @@ The backend validates its variables at startup (`src/config/env.js`) and refuses
 | ----------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | `Port 5000 is already in use`                         | Another backend is running. Stop it (Ctrl+C in its terminal) or set a different `PORT`. |
 | `Invalid environment configuration`                   | The message lists each bad variable; fix it in `backend/.env`.                            |
-| `PrismaConfigEnvError: ... DATABASE_URL`              | Create `backend/.env` from `.env.example` and set `DATABASE_URL`.                          |
-| Browser shows CORS error                              | Add the frontend origin (exact scheme + host + port) to `CORS_ORIGINS`.                   |
+| `Could not connect to the database: ... Access denied` | Wrong user/password in `DATABASE_URL`, or the user lacks privileges (see step 1).        |
+| `Could not connect to the database: ... ECONNREFUSED`  | MySQL isn't running, or the host/port in `DATABASE_URL` is wrong.                         |
+| `Could not connect to the database: ... Unknown database` | Create the database (step 1) or fix its name in `DATABASE_URL`.                       |
+| `datasource.url property is required` (Prisma CLI)    | Create `backend/.env` from `.env.example` and set `DATABASE_URL`.                          |
+| `GET /api/v1/health` returns 503                      | The API is running but lost its database connection; check the server log.                |
+| Browser shows CORS error                              | Set `FRONTEND_URL` to the exact frontend origin (scheme + host + port) and restart.       |
 | `NEXT_PUBLIC_API_URL is not configured`               | Create `frontend/.env.local` and restart `npm run dev`.                                    |

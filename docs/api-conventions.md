@@ -69,6 +69,15 @@ Every response is JSON in one of two envelopes.
 | 415  | `UNSUPPORTED_ENCODING`  | Unsupported body encoding/charset                                |
 | 429  | `TOO_MANY_REQUESTS`     | Rate limit exceeded (see `RateLimit` / `Retry-After` headers)    |
 | 500  | `INTERNAL_SERVER_ERROR` | Unexpected failure                                               |
+| 503  | `SERVICE_UNAVAILABLE`   | Database unreachable or overloaded; retry later                  |
+
+Unhandled Prisma errors are mapped as a safety net:
+- `P2002` (unique) and `P2003` (foreign key) → 409
+- `P2025` (record not found) → 404
+- `P2000` (value too long) → 400
+- connection errors → 503
+
+Services still translate expected cases themselves, to give specific messages.
 
 ## Endpoints
 
@@ -78,8 +87,28 @@ Each module adds its endpoints here.
 
 | Method | Path      | Auth | Description    |
 | ------ | --------- | ---- | -------------- |
-| GET    | `/health` | –    | Liveness check |
+| GET    | `/health` | –    | API and database health. `200` when healthy, `503` when the database is unreachable. Never cached. |
 
-```json
-{ "success": true, "data": { "status": "ok", "uptimeSeconds": 12, "timestamp": "2026-10-19T07:06:04.683Z" } }
+```jsonc
+// 200 OK
+{
+  "success": true,
+  "data": {
+    "status": "ok",
+    "uptimeSeconds": 12,
+    "timestamp": "2026-10-19T07:06:04.683Z",
+    "checks": { "database": { "status": "up", "latencyMs": 2 } }
+  }
+}
+
+// 503 Service Unavailable
+{
+  "success": false,
+  "error": {
+    "code": "SERVICE_UNAVAILABLE",
+    "message": "Service temporarily unavailable",
+    "details": { "status": "unavailable", "uptimeSeconds": 12, "timestamp": "...", "checks": { "database": { "status": "down" } } },
+    "requestId": "..."
+  }
+}
 ```

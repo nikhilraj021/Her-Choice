@@ -54,7 +54,7 @@ Her-Choice/
 │   │   ├── server.js                      ✓ entry point: listen + graceful shutdown
 │   │   ├── config/
 │   │   │   ├── env.js                     ✓ validated environment
-│   │   │   ├── database.js                · Prisma client instance [Backend foundation]
+│   │   │   ├── database.js                ✓ Prisma client, connect/disconnect, ping
 │   │   │   ├── razorpay.js                · [Payments]
 │   │   │   ├── cloudinary.js              · [Uploads]
 │   │   │   └── mailer.js                  · [Notifications]
@@ -70,7 +70,7 @@ Her-Choice/
 │   │   │   ├── <feature>.routes.js        · public/customer routes
 │   │   │   └── admin/<feature>.routes.js  · admin-only routes (/api/v1/admin/...)
 │   │   ├── controllers/<feature>.controller.js   ✓ health · others per module
-│   │   ├── services/<feature>.service.js         · business logic + transactions
+│   │   ├── services/<feature>.service.js         ✓ health · business logic + transactions per module
 │   │   ├── repositories/<entity>.repository.js   · Prisma queries
 │   │   ├── validators/<feature>.validator.js     · Zod request schemas
 │   │   ├── jobs/                          · scheduled work (expire unpaid orders, reconcile payments, email retries)
@@ -196,7 +196,7 @@ Route groups in parentheses only group files; they don't appear in URLs.
 
 1. Components call a **service** (`services/product.service.js`). The service calls **`api`** from `lib/api-client.js`.
 2. `api-client` sends `fetch(NEXT_PUBLIC_API_URL + path)` with `credentials: 'include'` and JSON bodies.
-3. The API's CORS allowlist (`CORS_ORIGINS`) permits the frontend origin with credentials.
+3. The API's CORS policy allows exactly one browser origin, `FRONTEND_URL`, with credentials.
 4. **Auth:** the API sets HTTP-only, `Secure` (in production), `SameSite=Lax` cookies.
    - JavaScript never sees tokens; the browser attaches the cookies automatically.
    - `localhost:3000` and `localhost:5000` count as the same *site*, so cookies work in development.
