@@ -3,8 +3,8 @@ import { describe, it } from 'node:test';
 import express from 'express';
 import request from 'supertest';
 import { z } from 'zod';
-import { errorHandler } from '../src/middlewares/errorHandler.js';
-import { validate } from '../src/middlewares/validate.js';
+import { errorHandler } from '../../src/middlewares/errorHandler.js';
+import { validate } from '../../src/middlewares/validate.js';
 
 function buildApp() {
   const app = express();

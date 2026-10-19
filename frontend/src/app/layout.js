@@ -1,7 +1,5 @@
 import { Inter } from 'next/font/google';
-import { SiteFooter } from '@/components/layout/SiteFooter';
-import { SiteHeader } from '@/components/layout/SiteHeader';
-import { siteConfig } from '@/config/site';
+import { siteConfig } from '@/lib/site';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
@@ -15,14 +13,11 @@ export const metadata = {
   description: siteConfig.description,
 };
 
+// Root layout: document shell only. Storefront, account and admin areas each provide their own chrome.
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="flex min-h-screen flex-col font-sans">
-        <SiteHeader />
-        <main className="flex-1">{children}</main>
-        <SiteFooter />
-      </body>
+      <body className="min-h-screen font-sans">{children}</body>
     </html>
   );
 }

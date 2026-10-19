@@ -1,74 +1,43 @@
 # Her Choice
 
-End-to-end e-commerce platform: a Next.js storefront/admin panel backed by an Express REST API and MySQL.
+End-to-end e-commerce platform: a Next.js storefront, customer account area and admin dashboard, backed by an Express REST API and MySQL.
 
-| Folder                  | What it is                                    | Default URL                      |
-| ----------------------- | --------------------------------------------- | -------------------------------- |
-| [`backend/`](backend)   | Express 5 REST API (ES modules)               | http://localhost:5000/api/v1     |
-| [`frontend/`](frontend) | Next.js App Router + Tailwind CSS             | http://localhost:3000            |
-| [`docs/`](docs)         | Architecture, conventions and API reference   |                                  |
+| Folder                  | What it is                                              | Default URL                    |
+| ----------------------- | ------------------------------------------------------- | ------------------------------ |
+| [`backend/`](backend)   | Express 5 REST API (ES modules), Prisma 7, MySQL 8      | http://localhost:5000/api/v1   |
+| [`frontend/`](frontend) | Next.js 16 App Router, Tailwind CSS 4, Zustand          | http://localhost:3000          |
+| [`docs/`](docs)         | Architecture, conventions, setup and lifecycle docs     |                                |
 
-The two apps are independent: each has its own `package.json`, dependencies, environment file and scripts.
+The two apps are independent: each has its own `package.json`, dependencies, environment file, scripts and tests.
 
-## Prerequisites
+## Quick start
 
-- Node.js **22.12+** (see `.nvmrc`)
-- npm 10+
-- MySQL 8 (required from the Database module onward)
+Requires Node.js 22.12+ and MySQL 8. Full instructions: [docs/development.md](docs/development.md).
 
-## Setup
-
-```bash
-# Backend
+```powershell
+# Terminal 1: API
 cd backend
-cp .env.example .env        # Windows PowerShell: Copy-Item .env.example .env
+Copy-Item .env.example .env      # then set DATABASE_URL
 npm install
-npm run dev                 # http://localhost:5000/api/v1/health
+npm run dev
 
-# Frontend (in a second terminal)
+# Terminal 2: website
 cd frontend
-cp .env.example .env.local  # Windows PowerShell: Copy-Item .env.example .env.local
+Copy-Item .env.example .env.local
 npm install
-npm run dev                 # http://localhost:3000
+npm run dev
 ```
 
-## Scripts
+## Common commands
 
-| App      | Command              | Purpose                                  |
-| -------- | -------------------- | ---------------------------------------- |
-| backend  | `npm run dev`        | Start with auto-restart (`node --watch`) |
-| backend  | `npm start`          | Start for production                     |
-| backend  | `npm test`           | Run the test suite (`node:test`)         |
-| frontend | `npm run dev`        | Next.js dev server                       |
-| frontend | `npm run build`      | Production build                         |
-| frontend | `npm start`          | Serve the production build               |
-| frontend | `npm run lint`       | ESLint                                   |
-
-## Environment variables
-
-### Backend (`backend/.env`)
-
-The API validates these at startup and refuses to start if any are invalid.
-
-| Variable               | Default                  | Description                                            |
-| ---------------------- | ------------------------ | ------------------------------------------------------ |
-| `NODE_ENV`             | `development`            | `development`, `production` or `test`                  |
-| `PORT`                 | `5000`                   | HTTP port                                              |
-| `CORS_ORIGINS`         | `http://localhost:3000`  | Comma-separated browser origins allowed with cookies   |
-| `TRUST_PROXY`          | `0`                      | Reverse-proxy hops in front of the API                 |
-| `LOG_LEVEL`            | `info`                   | pino log level                                         |
-| `BODY_SIZE_LIMIT`      | `100kb`                  | Max JSON / form body size                              |
-| `RATE_LIMIT_WINDOW_MS` | `900000`                 | Global rate-limit window (ms)                          |
-| `RATE_LIMIT_MAX`       | `300`                    | Requests per IP per window                             |
-
-### Frontend (`frontend/.env.local`)
-
-| Variable               | Example                         | Description                    |
-| ---------------------- | ------------------------------- | ------------------------------ |
-| `NEXT_PUBLIC_API_URL`  | `http://localhost:5000/api/v1`  | API base URL (public)          |
-| `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000`         | Public site URL for metadata   |
+| Task         | Backend               | Frontend         |
+| ------------ | --------------------- | ---------------- |
+| Develop      | `npm run dev`         | `npm run dev`    |
+| Lint         | `npm run lint`        | `npm run lint`   |
+| Test         | `npm test`            | `npm test`       |
+| Build/start  | `npm start`           | `npm run build && npm start` |
+| Migrations   | `npm run db:migrate`  | –                |
 
 ## Documentation
 
-- [Architecture & conventions](docs/architecture.md)
-- [API reference](docs/api.md)
+See [docs/README.md](docs/README.md). Start with [architecture.md](docs/architecture.md).
