@@ -6,13 +6,17 @@ const SHUTDOWN_TIMEOUT_MS = 10_000;
 
 const app = createApp();
 
-const server = app.listen(env.PORT, () => {
+// Express 5 also invokes this callback when listening fails (e.g. EADDRINUSE)
+const server = app.listen(env.PORT, (err) => {
+  if (err) {
+    const hint =
+      err.code === 'EADDRINUSE'
+        ? ` Port ${env.PORT} is already in use: stop the other process or set PORT in .env.`
+        : '';
+    logger.fatal({ err }, `Failed to start HTTP server.${hint}`);
+    process.exit(1);
+  }
   logger.info(`API listening on http://localhost:${env.PORT} (${env.NODE_ENV})`);
-});
-
-server.on('error', (err) => {
-  logger.fatal({ err }, 'Failed to start HTTP server');
-  process.exit(1);
 });
 
 let shuttingDown = false;
