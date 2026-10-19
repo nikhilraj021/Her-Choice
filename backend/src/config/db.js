@@ -1,0 +1,17 @@
+import mysql from 'mysql2/promise';
+import { env } from './env.js';
+
+export const pool = mysql.createPool({
+  ...env.db,
+  waitForConnections: true,
+  connectionLimit: 10,
+});
+
+export async function checkDbConnection() {
+  const conn = await pool.getConnection();
+  try {
+    await conn.ping();
+  } finally {
+    conn.release();
+  }
+}
