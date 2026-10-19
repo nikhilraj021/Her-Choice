@@ -30,41 +30,29 @@ Next.js 16 changes that affect this design:
 
 ## 3. Folder structure
 
-### Backend (feature modules; each module owns routes → controller → service → Prisma)
+### Backend (layered: routes → controllers → services → Prisma)
 
 ```
 backend/
-├─ prisma/
-│  ├─ schema.prisma
-│  ├─ migrations/
-│  └─ seed.js                 # admin user, categories, sample products
+├─ prisma/                    # schema.prisma, migrations/, seed.js (database module)
 ├─ prisma.config.js
-├─ database/schema.sql        # existing: CREATE DATABASE only
+├─ database/schema.sql        # CREATE DATABASE only
 ├─ src/
-│  ├─ server.js               # existing: boot, graceful shutdown, starts workers
-│  ├─ app.js                  # existing: middleware stack + /api router
-│  ├─ config/                 # env.js (validated with zod), db.js → Prisma client
-│  ├─ lib/                    # prisma.js, razorpay.js, mailer.js, storage.js, money.js
-│  ├─ middlewares/            # auth (requireAuth, requireRole), validate(zod), rateLimit,
-│  │                          # notFound, errorHandler, upload, rawBody (webhooks)
-│  ├─ utils/                  # ApiError, asyncHandler, pagination, slugify, crypto
-│  ├─ modules/
-│  │  ├─ auth/                # register, login, logout, me, password reset
-│  │  ├─ users/               # profile
-│  │  ├─ addresses/
-│  │  ├─ categories/
-│  │  ├─ products/            # public catalog + admin CRUD + variants + images
-│  │  ├─ inventory/           # stock adjustments, movement ledger
-│  │  ├─ cart/
-│  │  ├─ orders/              # checkout, history, admin status transitions
-│  │  ├─ payments/            # Razorpay order, verify, webhook, refunds
-│  │  └─ notifications/       # email templates, outbox worker
-│  ├─ jobs/                   # releaseExpiredReservations, emailOutboxWorker
-│  └─ routes/index.js         # mounts module routers
-└─ tests/                     # vitest + supertest; unit/ and integration/
+│  ├─ server.js               # boot, graceful shutdown, starts jobs
+│  ├─ app.js                  # helmet, cors, json, morgan, /api router, 404, errors
+│  ├─ config/                 # env.js (zod-validated), Prisma client, razorpay, mailer
+│  ├─ routes/                 # index.js + <feature>.routes.js (auth, products, cart…)
+│  ├─ controllers/            # <feature>.controller.js: HTTP in/out only
+│  ├─ services/               # <feature>.service.js: business rules and transactions
+│  ├─ middleware/             # validate, notFound, errorHandler, auth (requireAuth,
+│  │                          # requireRole), rateLimit, upload, rawBody (webhooks)
+│  ├─ validators/             # <feature>.validators.js: zod request schemas
+│  ├─ utils/                  # ApiError, apiResponse, pagination, slugify, money
+│  └─ jobs/                   # releaseExpiredReservations, emailOutboxWorker
+└─ tests/                     # node:test, *.test.js
 ```
 
-A module looks like `modules/products/{products.routes.js, products.controller.js, products.service.js, products.schemas.js}`. Controllers only handle HTTP; business rules live in services.
+Each feature (auth, addresses, categories, products, inventory, cart, orders, payments, notifications) contributes one file per layer, e.g. `products.routes.js`, `products.controller.js`, `products.service.js`, `products.validators.js`. Controllers only handle HTTP; business rules live in services.
 
 ### Frontend
 
@@ -178,7 +166,7 @@ Every route is under `/api/v1`. Roles: **public**, **customer** (any logged-in u
 | webhooks | `POST /webhooks/razorpay` (raw body, signature-verified, no session) | Razorpay |
 | admin | `GET /admin/dashboard`; `/admin/products` CRUD + `/variants` + `/images` + `PATCH …/status` (archive/sold-out); `/admin/categories` CRUD; `POST /admin/inventory/adjust`, `GET /admin/inventory/movements`; `GET /admin/orders`, `GET /admin/orders/:id`, `PATCH /admin/orders/:id/status`; `POST /admin/orders/:id/refund` | admin |
 
-Response shape: `{ data, meta? }` on success, `{ error: { code, message, details? } }` on failure, with zod issues mapped to `details`.
+Response shape (implemented in `src/utils/apiResponse.js`): `{ success: true, data, meta? }` on success, `{ success: false, error: { code, message, details? } }` on failure, with zod issues mapped to `details` (`422 VALIDATION_ERROR`). Outside production, 500 responses also include `error.stack`.
 
 ## 7. Security risks and mitigations
 

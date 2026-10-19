@@ -4,15 +4,24 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import { env } from './config/env.js';
 import routes from './routes/index.js';
-import { notFound } from './middlewares/notFound.js';
-import { errorHandler } from './middlewares/errorHandler.js';
+import { notFound } from './middleware/notFound.js';
+import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
 
+app.disable('x-powered-by');
 app.use(helmet());
-app.use(cors({ origin: env.corsOrigin, credentials: true }));
-app.use(express.json());
-app.use(morgan(env.nodeEnv === 'production' ? 'combined' : 'dev'));
+app.use(
+  cors({
+    origin: env.frontendUrls,
+    credentials: true,
+  }),
+);
+app.use(express.json({ limit: env.jsonBodyLimit }));
+
+if (!env.isTest) {
+  app.use(morgan(env.isProduction ? 'combined' : 'dev'));
+}
 
 app.use('/api', routes);
 

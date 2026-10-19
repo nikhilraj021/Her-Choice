@@ -1,11 +1,7 @@
-import { checkDbConnection } from '../config/db.js';
+import { getHealthStatus } from '../services/health.service.js';
+import { sendSuccess } from '../utils/apiResponse.js';
 
-export async function getHealth(req, res) {
-  let database = 'up';
-  try {
-    await checkDbConnection();
-  } catch {
-    database = 'down';
-  }
-  res.status(database === 'up' ? 200 : 503).json({ status: 'ok', database });
+export function getHealth(req, res) {
+  res.set('Cache-Control', 'no-store');
+  sendSuccess(res, getHealthStatus());
 }
